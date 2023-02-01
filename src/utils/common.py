@@ -1,5 +1,14 @@
 from typing import Any
 
+SELECT = "SELECT"
+AND = "AND"
+WHERE = "WHERE"
+
+PAD = "PAD"
+SOS = "SOS"
+EOS = "EOS"
+OOV = "OOV"
+
 
 def count_lines(fname):
     with open(fname) as f:
@@ -13,16 +22,15 @@ def detokenize(tokens):
     return ret.strip()
 
 
-class EntityToId(dict):
+class EntityToId(object):
     # only works for bijective mapping
     # note: older pythn version dict are not ordered
     def __init__(self, *args, **kwargs):
         super(EntityToId, self).__init__(*args, **kwargs)
         # helper to froze the mapping, usefull for processing dev and test dataset
         self._frozen = False
-        self.inverse = {}
-        for key, value in self.items():
-            self.inverse[value] = key
+        self.data = dict()
+        self.inverse = dict()
 
     @property
     def is_frozen(self):
@@ -36,20 +44,25 @@ class EntityToId(dict):
         self._frozen = False
         return self
 
+    def __getitem__(self, key):
+        return self.data[key]
+
+    def get(self, key, default):
+        return self.data.get(key, default)
+
     def __setitem__(self, key, value):
-        super(EntityToId, self).__setitem__(key, value)
+        self.data[key] = value
         self.inverse[value] = key
 
     def __delitem__(self, key):
-        if self[key] in self.inverse:
-            del self.inverse[self[key]]
-        super(EntityToId, self).__delitem__(key)
+        self.inverse.__delitem__[self[key]]
+        self.data.__delitem__(key)
 
     def add_entity(
         self,
         key: Any,
     ):
-        if (key not in self) and (not self._frozen):
-            value = len(self)
-            super(EntityToId, self).__setitem__(key, value)
+        if (key not in self.data) and (not self._frozen):
+            value = len(self.data)
+            self.data[key] = value
             self.inverse[value] = key
