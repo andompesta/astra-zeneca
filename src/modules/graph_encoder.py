@@ -1,18 +1,20 @@
+import torch
+from torch import Tensor, nn
 
-from torch_geometric import nn
+from torch_geometric import nn as gnn
 from torch_scatter import scatter
 
 
-class MPNNLayer(nn.MessagePassing):
+class MPNNLayer(gnn.MessagePassing):
     # this implement the forward aggregation process only
     # backward embedding is obtained by reversing the adges direction in the graph
     def __init__(
         self,
-        emb_dim=4,
-        aggr='add',
-        node_dim=-2,
+        emb_dim: int,
+        aggr: str = 'max',
+        node_dim: int = -2,
         # aggregate forward neitghours
-        flow="target_to_source",
+        flow: str = "target_to_source",
     ):
         super().__init__(
             aggr=aggr,
@@ -21,6 +23,17 @@ class MPNNLayer(nn.MessagePassing):
         )
 
         self.emb_dim = emb_dim
+
+        self.ln_pool = torch.nn.Linear(
+            self.emb_dim,
+            self.emb_dim,
+        )
+
+        self.ln_merge = torch.nn.Linear(
+            2 * self.emb_dim,
+            emb_dim,
+            bias=False,
+        )
 
     def forward(self, h, edge_index):
         """
@@ -41,7 +54,7 @@ class MPNNLayer(nn.MessagePassing):
         )
         return out
 
-    def message(self, h_i, h_j):
+    def message(self, h_j: Tensor) -> Tensor:
         """
         Create messages for each edge based on node embedding.
         Since it is the embedding for the forward pass, i represent the sournce node
@@ -57,10 +70,14 @@ class MPNNLayer(nn.MessagePassing):
         Returns:
             msg: (e, d) - messages `m_ij` passed through MLP `\psi`
         """
-        msg = h_i + h_j
-        return msg
+        return h_j
+        # return torch.nn.functional.relu(self.ln_pool(h_j))
 
-    def aggregate(self, inputs, index):
+    def aggregate(
+        self,
+        inputs: Tensor,
+        index: Tensor,
+    ) -> Tensor:
         """Aggregates the messages from neighboring nodes. In this case 
         the neighours are the destination nodes of each edge.
         The aggregation function applied is defined by `aggr` parameter.
@@ -81,22 +98,86 @@ class MPNNLayer(nn.MessagePassing):
             reduce=self.aggr,
         )
 
-    def update(self, aggr_out, h):
-        """
-        Step (3) Update
-
-        The `update()` function computes the final node features by combining the 
+    def update(
+        self,
+        aggr_out: Tensor,
+        h: Tensor,
+    ) -> Tensor:
+        """The `update()` function computes the final node features by combining the 
         aggregated messages with the initial node features.
-
-        `update()` takes the first argument `aggr_out`, the result of `aggregate()`, 
-        as well as any optional arguments that were initially passed to 
-        `propagate()`. E.g. in this case, we additionally pass `h`.
 
         Args:
             aggr_out: (n, d) - aggregated messages `m_i`
             h: (n, d) - initial node features
 
         Returns:
-            upd_out: (n, d) - updated node features passed through MLP `\phi`
+            upd_out: (n, d) - updated node features
         """
         return h + aggr_out
+        h = self.ln_merge(torch.cat(
+            (h, aggr_out),
+            dim=-1,
+        ))
+        h = torch.nn.functional.relu(h)
+        return h
+
+
+class GraphEncoder(nn.Module):
+
+    def __init__(
+        self,
+        emb_dim: int,
+        layers: int,
+        aggr: str = "sum",
+        **kwargs,
+    ) -> None:
+        super().__init__()
+        self.emb_dim = emb_dim
+
+        self.convs = nn.ModuleList([
+            MPNNLayer(
+                self.emb_dim,
+                aggr=aggr,
+            ) for _ in range(layers)
+        ])
+
+        self.ln_edge_merge = nn.Linear(
+            2 * self.emb_dim,
+            self.emb_dim,
+        )
+
+        self.graph_pool = gnn.pool.global_max_pool
+
+    def forward(
+        self,
+        h,
+        fw_edge_index,
+        bw_edge_index,
+        batch,
+    ) -> tuple[Tensor, Tensor]:
+        fw_h = h
+        for conv in self.convs:
+            fw_h = conv(fw_h, fw_edge_index)
+
+        bw_h = h
+        for conv in self.convs:
+            bw_h = conv(bw_h, bw_edge_index)
+
+        # node embedding used for attention
+        h = torch.cat((fw_h, bw_h), dim=-1)
+        h = self.ln_edge_merge(h)
+
+        # compute graph embedding by max_pooling
+        g_h = self.graph_pool(h, batch)
+
+        return g_h, h
+
+    def reset_parameter(self):
+        for name, param in self.named_parameters():
+            if name.endswith("weight"):
+                # relu and linear layers uses almost the same gain
+                nn.init.kaiming_normal_(param.data, nonlinearity="relu")
+            elif name.endswith("bias"):
+                nn.init.zeros_(param.data)
+            else:
+                raise NotImplementedError("plain parameters are not supported \t {}".format(name))
