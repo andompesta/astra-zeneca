@@ -1,4 +1,4 @@
-from .adam import Adam
+from .optimizers import get_group_params, get_optimizer
 from .schedulers import (
     get_constant_scheduler,
     get_constant_scheduler_with_warmup,
@@ -9,7 +9,8 @@ from .schedulers import (
 
 
 __all__ = [
-    "Adam",
+    "get_group_params",
+    "get_optimizer",
     "get_constant_scheduler",
     "get_constant_scheduler_with_warmup",
     "get_linear_scheduler_with_warmup",
