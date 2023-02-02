@@ -1,4 +1,7 @@
 from typing import Any
+import torch
+import shutil
+from pathlib import Path
 
 SELECT = "SELECT"
 AND = "AND"
@@ -20,6 +23,20 @@ def detokenize(tokens):
     for g, a in zip(tokens['gloss'], tokens['after']):
         ret += g + a
     return ret.strip()
+
+
+def save_checkpoint(
+    path_: Path,
+    state: dict,
+    is_best: bool,
+    filename="checkpoint.pth.tar",
+):
+    torch.save(state, path_.joinpath(filename).as_posix())
+    if is_best:
+        shutil.copy(
+            path_.joinpath(filename).as_posix(),
+            path_.joinpath("model_best.pth.tar").as_posix(),
+        )
 
 
 class EntityToId(object):
