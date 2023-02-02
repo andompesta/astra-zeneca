@@ -79,15 +79,22 @@ class WikiDataset(InMemoryDataset):
             x = x.long().contiguous()
 
             token_ids = [self.entity_2_id[SOS]] + token_ids + [self.entity_2_id[EOS]]
+            src_seq = token_ids[:-1]
+            trg_seq = token_ids[0:]
+
             # PAD to MAX_SEQ_LEN
-            token_ids = token_ids + [self.entity_2_id[PAD]] * (MAX_SEQ_LEN - len(token_ids))
-            y = torch.tensor(token_ids).unsqueeze(0).long().contiguous()
+            src_seq = src_seq + [self.entity_2_id[PAD]] * (MAX_SEQ_LEN - len(src_seq))
+            src_seq = torch.tensor(src_seq).unsqueeze(0).long().contiguous()
+
+            trg_seq = trg_seq + [self.entity_2_id[PAD]] * (MAX_SEQ_LEN - len(trg_seq))
+            trg_seq = torch.tensor(trg_seq).unsqueeze(0).long().contiguous()
 
             data = Data(
                 x=x,
                 edge_index=fw_edge_idx,
                 bw_edge_index=bw_edge_idx,
-                y=y,
+                src_seq=src_seq,
+                trg_seq=trg_seq,
             )
 
             assert not data.has_self_loops()
