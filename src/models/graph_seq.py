@@ -95,6 +95,7 @@ class GraphSeqAttn(torch.nn.Module):
         super().__init__()
         self.emb_dim = emb_dim
         self.vocab_size = vocab_size
+        
         self.emb = nn.Embedding(
             vocab_size,
             self.emb_dim,
@@ -145,7 +146,7 @@ class GraphSeqAttn(torch.nn.Module):
 
     def reset_parameter(self):
         torch.nn.init.xavier_normal_(self.emb.weight.data)
-        torch.nn.init.xavier_normal_(self.out.weight.data)
+        # torch.nn.init.xavier_normal_(self.out.weight.data)
         torch.nn.init.zeros_(self.out.bias.data)
 
         self.graph_enc.reset_parameter()
