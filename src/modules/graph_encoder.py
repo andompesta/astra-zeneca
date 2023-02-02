@@ -24,12 +24,12 @@ class MPNNLayer(gnn.MessagePassing):
 
         self.emb_dim = emb_dim
 
-        self.ln_pool = torch.nn.Linear(
-            self.emb_dim,
-            self.emb_dim,
-        )
+        # self.ln_pool = torch.nn.Linear(
+        #     self.emb_dim,
+        #     self.emb_dim,
+        # )
 
-        self.ln_merge = torch.nn.Linear(
+        self.ln_node_merge = torch.nn.Linear(
             2 * self.emb_dim,
             emb_dim,
             bias=False,
@@ -113,8 +113,8 @@ class MPNNLayer(gnn.MessagePassing):
         Returns:
             upd_out: (n, d) - updated node features
         """
-        return h + aggr_out
-        h = self.ln_merge(torch.cat(
+        # return h + aggr_out
+        h = self.ln_node_merge(torch.cat(
             (h, aggr_out),
             dim=-1,
         ))
@@ -128,7 +128,7 @@ class GraphEncoder(nn.Module):
         self,
         emb_dim: int,
         layers: int,
-        aggr: str = "sum",
+        aggr: str = "mean",
         **kwargs,
     ) -> None:
         super().__init__()
@@ -175,8 +175,9 @@ class GraphEncoder(nn.Module):
     def reset_parameter(self):
         for name, param in self.named_parameters():
             if name.endswith("weight"):
+                nn.init.xavier_normal_(param.data)
                 # relu and linear layers uses almost the same gain
-                nn.init.kaiming_normal_(param.data, nonlinearity="relu")
+                # nn.init.kaiming_normal_(param.data, nonlinearity="relu")
             elif name.endswith("bias"):
                 nn.init.zeros_(param.data)
             else:
