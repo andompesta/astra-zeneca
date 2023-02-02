@@ -15,6 +15,7 @@ from src.utils.common import (
 )
 
 MAX_SEQ_LEN = 17
+MAX_NEIGHBOURS = 12
 
 
 class WikiDataset(InMemoryDataset):
