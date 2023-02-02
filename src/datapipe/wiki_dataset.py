@@ -80,7 +80,7 @@ class WikiDataset(InMemoryDataset):
 
             token_ids = [self.entity_2_id[SOS]] + token_ids + [self.entity_2_id[EOS]]
             src_seq = token_ids[:-1]
-            trg_seq = token_ids[0:]
+            trg_seq = token_ids[1:]
 
             # PAD to MAX_SEQ_LEN
             src_seq = src_seq + [self.entity_2_id[PAD]] * (MAX_SEQ_LEN - len(src_seq))
