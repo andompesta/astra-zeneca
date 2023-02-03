@@ -56,48 +56,57 @@ The project is structured:
 
 ## Env Setup
 
-For reproducibility, the working environment is shadred in 2 different version:
+For reproducibility, the working environment is shared in 2 different versions:
 
- 1. pip requirements. this version contains only the packages needed for training
+**1. pip requirements**
+
+this version contains only the packages needed for training
 
 ```bash
 pip install -r requirements.txt --default-timeout=100
 ```
-*Unfortunetly* torch-scatter and torch-sparse are provided on conda due to their cuda dependencies. Thus you need to manually install 2 additional linraries `torch-scatter` and `torch-sparse`:
+
+*Unfortunately*, torch-scatter and torch-sparse are provided on conda due to their cuda dependencies. Thus you need to manually install 2 additional libraries `torch-scatter` and `torch-sparse`:
 
 ```bash
 pip install torch-scatter torch-sparse -f https://data.pyg.org/whl/torch-1.13.0+${CUDA}.html
 ```
+
 where CUDA stand for `cu{verision}`, probably `cu116`.
 
- 2. conda environment. you can create my working conda environment:
+
+**2. conda environment**
+
+you can create my working conda environment:
 
 ```bash
 conda env create -f environment.yml
 ```
 
 and activate it by `conda activate geometric`.
-Note that the conda environment is much larger as contains jupyter notebook and server.
+Note that the conda environment is much larger as it contains jupyter notebook and server.
+Thus might require time to install.
+
 
 ##### Why Jupyter Notebooks
 
-I' not a huge fan of jupyter notebooks as they became large and messy. Thus, are usually difficult to understand by other team members.
-But, I admit their utility for preprocessing as you can run bash and python command in the same environment. Moreover, they are a great tool to visualise data.
-To this end, I use a notebook to download, extract and process the WikiSQL dataset in the row format, but the training script pure python; thus easily deployable for remote execution.
-
+I'm not a huge fan of jupyter notebooks as they became large and messy.
+Thus, are usually difficult to understand other team members.
+But, I admit their utility for preprocessing as you can run bash and python commands in the same UI.
+Moreover, they are a great tool to visualise data.
+To this end, I use a notebook to download, extract and process the WikiSQL dataset in the row format, but the training script is pure python; thus easily deployable for remote execution.
 
 ## Results
 
 
 Fig. 1 and 2 report the training and evaluation performances over 3 distinct runs.
-As you can see, the model can consistenty achieve accurate predictions on the validation set.
+As you can see, the model can consistently achieve accurate predictions on the validation set.
 
-However, the final BLUE-4 score reported on the test set is `0.46` which a half what is reproted on the evaluation set. 
-This raises concern on the data processing process and on potential difference between train and test dataset. 
+However, the final BLUE-4 score reported on the test set is `0.46` which a half what is reported on the evaluation set. 
+This raises concerns about the data processing process and potential differences between the train and test datasets. 
 
-An other visible problem related to the network initialization as the initial training loss is too high.
-Such effect suggests that the output obtained after random inizializing the network is not uniformly distributed across classes.
-As a consequence we might suffer from gradient vanishing problems.
+Another visible problem related to the network initialization as the initial training loss is too high suggesting that the network output obtained after random initialising the network is not uniformly distributed across classes.
+As a consequence, we might suffer from gradient vanishing problems.
 
 
 <div style="text-align:center;" id="fig:overfit">
