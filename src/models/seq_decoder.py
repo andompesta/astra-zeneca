@@ -32,9 +32,7 @@ class DecoderRNN(nn.Module):
 
     def init_hidden(self, graph_enc: torch.Tensor):
         return graph_enc.unsqueeze(0).expand(self.layers, -1, -1).contiguous()
-        # return torch.zeros_like(
-        #     graph_enc.unsqueeze(0).expand(self.layers, -1, -1)).contiguous()
-
+    
     def reset_parameter(self):
         for name, param in self.named_parameters():
             if "weight" in name:
