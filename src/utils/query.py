@@ -93,8 +93,7 @@ class Query:
                 Query.cond_ops[condition[1]],
                 # parse all conditions to string as need to be tokenized
                 str(condition[2]).lower(),
-            # return empy list if no conditions are provided
-            ) for condition in d.get('conds', [])
+            ) for condition in d.get('conds', [])  # return empy list if no conditions are provided
         ]
 
         return cls(
