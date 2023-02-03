@@ -56,21 +56,21 @@ The project is structured:
 
 ## Env Setup
 
+For reproducibility, the working environment is shadred in 2 different version:
 
-
+ 1. pip requirements. this version contains only the packages needed for training
 
 ```bash
 pip install -r requirements.txt --default-timeout=100
 ```
-
-additionally you need to manually install 2 additional linraries `torch-scatter` and `torch-sparse`:
+*Unfortunetly* torch-scatter and torch-sparse are provided on conda due to their cuda dependencies. Thus you need to manually install 2 additional linraries `torch-scatter` and `torch-sparse`:
 
 ```bash
 pip install torch-scatter torch-sparse -f https://data.pyg.org/whl/torch-1.13.0+${CUDA}.html
 ```
 where CUDA stand for `cu{verision}`, probably `cu116`.
 
-Alternatively, you can create the conda environment I used with:
+ 2. conda environment. you can create my working conda environment:
 
 ```bash
 conda env create -f environment.yml
@@ -79,5 +79,63 @@ conda env create -f environment.yml
 and activate it by `conda activate geometric`.
 Note that the conda environment is much larger as contains jupyter notebook and server.
 
+##### Why Jupyter Notebooks
 
-{'eval_loss': 1.128922298849826, 'eval_accuracy': 0.7558398314730815, 'eval_blue_score': 0.4433480826982322}
+I' not a huge fan of jupyter notebooks as they became large and messy. Thus, are usually difficult to understand by other team members.
+But, I admit their utility for preprocessing as you can run bash and python command in the same environment. Moreover, they are a great tool to visualise data.
+To this end, I use a notebook to download, extract and process the WikiSQL dataset in the row format, but the training script pure python; thus easily deployable for remote execution.
+
+
+## Results
+
+
+Fig. 1 and 2 report the training and evaluation performances over 3 distinct runs.
+As you can see, the model can consistenty achieve accurate predictions on the validation set.
+
+However, the final BLUE-4 score reported on the test set is `0.46` which a half what is reproted on the evaluation set. 
+This raises concern on the data processing process and on potential difference between train and test dataset. 
+
+An other visible problem related to the network initialization as the initial training loss is too high.
+Such effect suggests that the output obtained after random inizializing the network is not uniformly distributed across classes.
+As a consequence we might suffer from gradient vanishing problems.
+
+
+<div style="text-align:center;" id="fig:overfit">
+    <figure>
+        <figure>
+            <img src="img/train_loss.png" style="max-width: 80%">
+            <figcaption style="font-size:small;">
+                Figure 1.a: Training loss.
+            </figcaption>
+        </figure>
+        <figure>
+            <img src="img/train_acc.png" style="max-width: 80%">
+            <figcaption style="font-size:small;">
+                Figure 1.b: Training accuracy.
+            </figcaption>
+        </figure>
+    </figure>
+</div>
+
+<div style="text-align:center;" id="fig:overfit">
+    <figure>
+        <figure>
+            <img src="img/eval_loss.png" style="max-width: 80%">
+            <figcaption style="font-size:small;">
+                Figure 2.a: Eval loss.
+            </figcaption>
+        </figure>
+        <figure>
+            <img src="img/eval_acc.png" style="max-width: 80%">
+            <figcaption style="font-size:small;">
+                Figure 2.b: Eval accuracy.
+            </figcaption>
+        </figure>
+        <figure>
+            <img src="img/train_acc.png" style="max-width: 80%">
+            <figcaption style="font-size:small;">
+                Figure 2.c: Eval BLUE-4.
+            </figcaption>
+        </figure>
+    </figure>
+</div>
