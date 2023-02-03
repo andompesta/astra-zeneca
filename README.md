@@ -4,7 +4,7 @@
 
 The project is structured:
 
- - [main.py](./main.py): The main file for training. It is a pure python file that can receive multiple arguments as inputs to customize the training process.
+ - [main.py](./main.py): The main file for training. It is a pure python file that can receive multiple arguments as inputs to customize the training process. Note that to run the code you need an [wandb](https://wandb.ai/) account.
  - [preprocessing.ipynb](./preprocessing.ipynb): The notebook used to download, unzip and parse the content of the original WikiSQL dataset. The generated output of the notebook is a set of query tokens and graphs later used by [WikiDataset](./src/datapipe/wiki_dataset.py) class to generate the processes in-memory dataset.
  - data: The folder containing the dataset (raw and processed) as well as all the additional pieces of information needed during training and testing.
  - ckps: The folder containing the checkpoints of the model trained. Each model is stored in a subfolder identified by the `experiment_name` that it is associated with..
