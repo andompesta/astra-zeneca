@@ -141,7 +141,7 @@ As a consequence, we might suffer from gradient vanishing problems.
             </figcaption>
         </figure>
         <figure>
-            <img src="img/train_acc.png" style="max-width: 80%">
+            <img src="img/eval_blue.png" style="max-width: 80%">
             <figcaption style="font-size:small;">
                 Figure 2.c: Eval BLUE-4.
             </figcaption>
