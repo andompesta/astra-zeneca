@@ -82,6 +82,7 @@ class AttnDecoderRNN(nn.Module):
             self.emd_dim,
             bias=False,
         )
+        self.ln = nn.LayerNorm(self.emd_dim)
 
     def forward(
         self,
@@ -113,6 +114,8 @@ class AttnDecoderRNN(nn.Module):
         )  # B, L, V
 
         context = att_probs.bmm(encoder_output)  # B, L, H
+        context = x + context
+        context = self.ln(context)
 
         x = torch.cat((x, context), dim=-1)  # B, L, H
 
@@ -125,7 +128,11 @@ class AttnDecoderRNN(nn.Module):
         return graph_enc.unsqueeze(0).expand(self.layers, -1, -1).contiguous()
 
     def reset_parameter(self):
-        for name, param in self.named_parameters():
+        self.ln.reset_parameters()
+        nn.init.xavier_normal_(self.attn_nodes.weight.data)
+        nn.init.xavier_normal_(self.attn_seq.weight.data)
+
+        for name, param in self.gru.named_parameters():
             if "weight" in name:
                 nn.init.xavier_normal_(param.data)
             elif "bias" in name:
