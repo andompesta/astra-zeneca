@@ -90,8 +90,8 @@ Thus might require time to install.
 
 ##### Why Jupyter Notebooks
 
-I'm not a huge fan of jupyter notebooks as they became large and messy.
-Thus, are usually difficult to understand other team members.
+I'm not a huge fan of jupyter notebooks as they became large, messy and generate problems when importing multiple times custom code.
+Thus, they results difficult to understand or review by other team members.
 But, I admit their utility for preprocessing as you can run bash and python commands in the same UI.
 Moreover, they are a great tool to visualise data.
 To this end, I use a notebook to download, extract and process the WikiSQL dataset in the row format, but the training script is pure python; thus easily deployable for remote execution.
