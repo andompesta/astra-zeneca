@@ -13,7 +13,7 @@ from src.utils import (
     train_fn,
     eval_fn,
 )
-from src.models.graph_seq import GraphSeq, GraphSeqAttn
+from src.models import GraphSeq, GraphSeqAttn
 from src.optim import (
     get_optimizer,
     get_group_params,
@@ -42,22 +42,11 @@ def parse_args() -> argparse.Namespace:
         type=str,
     )
     parser.add_argument("--dataset_base_path", default="data/wiki")
-    parser.add_argument(
-        "--ckp_base_path",
-        default="ckps",
-    )
-    parser.add_argument(
-        "--train_dataset_name",
-        default="train",
-    )
-    parser.add_argument(
-        "--dev_dataset_name",
-        default="dev",
-    )
-    parser.add_argument(
-        "--vocab_path",
-        default="data/wiki/entity_2_id.bin",
-    )
+    parser.add_argument("--ckp_base_path", default="ckps")
+    parser.add_argument("--train_dataset_name", default="train")
+    parser.add_argument("--dev_dataset_name", default="dev")
+    parser.add_argument("--test_dataset_name", default="test")
+    parser.add_argument("--vocab_path", default="data/wiki/entity_2_id.bin")
 
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--batch_size", default=64)
@@ -80,11 +69,11 @@ if __name__ == "__main__":
     notes = args.notes
     device = torch.device(args.device)
     with wandb.init(
-        project=PROJECT,
-        job_type=JOB_TYPE,
-        notes=notes,
-        group=EXPERIMENT_NAME,
-        config=vars(args),
+            project=PROJECT,
+            job_type=JOB_TYPE,
+            notes=notes,
+            group=EXPERIMENT_NAME,
+            config=vars(args),
     ) as exp:
         # add net config
         exp.config.update(DEFAULT_NET_CONF)
@@ -177,7 +166,8 @@ if __name__ == "__main__":
                 steps_per_epoch=exp.config.steps_per_epoch,
                 scheduler=scheduler,
                 device=device,
-                gradient_accumulation_steps=exp.config.gradient_accumulation_steps,
+                gradient_accumulation_steps=exp.config.
+                gradient_accumulation_steps,
                 pad_idx=exp.config.pad_idx,
                 max_grad_norm=exp.config.max_grad_norm,
             )
@@ -222,3 +212,36 @@ if __name__ == "__main__":
                     is_best=is_best,
                     filename=f"ckp_{epoch}.pth.tar",
                 )
+
+        # test best model
+        test_dataset = WikiDataset(
+            exp.config.dataset_base_path,
+            exp.config.test_dataset_name,
+            exp.config.vocab_path,
+        )
+        test_dl = DataLoader(
+            test_dataset,
+            batch_size=exp.config.batch_size,
+            shuffle=False,
+        )
+
+        sate_dict = torch.load(ckp_path.joinpath("model_best.pth.tar"))
+        model = GraphSeqAttn(
+            emb_dim=exp.config.emb_dim,
+            vocab_size=exp.config.vocab_size,
+            pad_idx=exp.config.pad_idx,
+            graph_conv_layers=exp.config.graph_conv_layers,
+            rnn_decoder_layers=exp.config.rnn_layers,
+            rnn_dropout=exp.config.rnn_dropout,
+        )
+        model.load_state_dict(sate_dict)
+        model = model.to(device)
+
+        scores = eval_fn(
+            model=model,
+            dataloader=test_dl,
+            device=device,
+        )
+
+        print("test performances")
+        print(scores)
