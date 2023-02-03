@@ -68,6 +68,7 @@ if __name__ == "__main__":
     args = parse_args()
     notes = args.notes
     device = torch.device(args.device)
+    # log params into wandb
     with wandb.init(
             project=PROJECT,
             job_type=JOB_TYPE,
@@ -88,10 +89,11 @@ if __name__ == "__main__":
             batch_size=exp.config.batch_size,
             shuffle=True,
         )
-        # scheduler parameters
+        # compute the phases needed by the LR scheduler
         exp.config.batches_per_epoch = len(train_dl)
 
         # yapf: disable
+        # if we use gradient accumulation, the number of gradient update is different than the number of batches
         exp.config.steps_per_epoch = int(
             exp.config.batches_per_epoch / exp.config.gradient_accumulation_steps
         )
@@ -127,16 +129,20 @@ if __name__ == "__main__":
 
         # setup optimizers
         named_params = list(model.named_parameters())
+        # partition the model's parameters in 2 group: one on which weight-decay is applyed and one on which is not applied.
+        # NOTE: usually weight decay is not applied to layer-norms layers. this should be fixed, but no time to test it
         group_params = get_group_params(
             named_params,
             exp.config.weight_decay,
             no_decay=["bias"],
         )
+        # create the optimizers
         optimizer = get_optimizer(
             method=exp.config.optim_method,
             params=group_params,
             lr=exp.config.learning_rate,
         )
+        # create a scheduler with linear warmup and decay
         scheduler = get_linear_scheduler_with_warmup(
             optimizer,
             exp.config.num_warmup_steps,

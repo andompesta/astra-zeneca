@@ -132,6 +132,7 @@ class GraphSeqAttn(torch.nn.Module):
         bw_edge_id: LongTensor,
         batch: LongTensor,
     ) -> Tensor:
+        # instead of a node and token embedding, I use the same embedding table with 2 distinct projection layers
         node_emb = self.emb(node_idx)
         node_emb = self.to_node(node_emb)
         src_seq = self.emb(src_idx)
