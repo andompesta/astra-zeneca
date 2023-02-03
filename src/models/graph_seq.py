@@ -42,6 +42,9 @@ class GraphSeq(torch.nn.Module):
             rnn_dropout,
         )
 
+        self.to_node = nn.Linear(emb_dim, emb_dim, bias=False)
+        self.to_token = nn.Linear(emb_dim, emb_dim, bias=False)
+
         self.out = nn.Linear(emb_dim, vocab_size)
 
         self.reset_parameter()
@@ -55,7 +58,9 @@ class GraphSeq(torch.nn.Module):
         batch: LongTensor,
     ) -> Tensor:
         node_emb = self.emb(node_idx)
+        node_emb = self.to_node(node_emb)
         src_seq = self.emb(src_idx)
+        src_seq = self.to_token(src_seq)
 
         graph_emb, node_emb = self.graph_enc(
             node_emb,
@@ -71,6 +76,8 @@ class GraphSeq(torch.nn.Module):
 
     def reset_parameter(self):
         torch.nn.init.xavier_normal_(self.emb.weight.data)
+        torch.nn.init.xavier_normal_(self.to_node.weight.data)
+        torch.nn.init.xavier_normal_(self.to_token.weight.data)
         self.graph_enc.reset_parameter()
         self.seq_dec.reset_parameter()
 
@@ -95,7 +102,7 @@ class GraphSeqAttn(torch.nn.Module):
         super().__init__()
         self.emb_dim = emb_dim
         self.vocab_size = vocab_size
-        
+
         self.emb = nn.Embedding(
             vocab_size,
             self.emb_dim,
@@ -112,6 +119,8 @@ class GraphSeqAttn(torch.nn.Module):
             rnn_dropout,
         )
         self.out = nn.Linear(emb_dim, vocab_size)
+        self.to_node = nn.Linear(emb_dim, emb_dim, bias=False)
+        self.to_token = nn.Linear(emb_dim, emb_dim, bias=False)
 
         self.reset_parameter()
 
@@ -124,7 +133,9 @@ class GraphSeqAttn(torch.nn.Module):
         batch: LongTensor,
     ) -> Tensor:
         node_emb = self.emb(node_idx)
+        node_emb = self.to_node(node_emb)
         src_seq = self.emb(src_idx)
+        src_seq = self.to_token(src_seq)
 
         graph_emb, node_emb = self.graph_enc(
             node_emb,
@@ -146,7 +157,9 @@ class GraphSeqAttn(torch.nn.Module):
 
     def reset_parameter(self):
         torch.nn.init.xavier_normal_(self.emb.weight.data)
-        # torch.nn.init.xavier_normal_(self.out.weight.data)
+        torch.nn.init.xavier_normal_(self.to_node.weight.data)
+        torch.nn.init.xavier_normal_(self.to_token.weight.data)
+        torch.nn.init.xavier_normal_(self.out.weight.data)
         torch.nn.init.zeros_(self.out.bias.data)
 
         self.graph_enc.reset_parameter()
