@@ -1,4 +1,6 @@
-# Astra Zeneca by Sandro Cavallari
+# Graph2Seq: Graph to Sequence Learning with Attention-based Neural Networks
+
+Implementation of Graph2Seq paper in pytorch and PyG
 
 ## Project Structure
 
